@@ -38,8 +38,6 @@ class LinearRegression(TrainBase):
             
             self.intercept -= learning_rate * np.mean(error)
 
-            if (t + 1) % 200 == 0:
-                logger.info(f"Iteration {t+1}/{T} completed.")
 
     def predict(self, X):
         return X @ self.weights + self.intercept
@@ -76,6 +74,12 @@ def compute_mse(prediction, ground_truth):
     return np.mean((prediction - ground_truth) ** 2)
 
 def compute_logistic_loss(prediction, ground_truth):
+    # 確保預測機率不會是 0 或 1，避免 log(0)
+    epsilon = 1e-15
+    prediction = np.clip(prediction, epsilon, 1 - epsilon)
+    # 統一壓平，避免 Broadcasting 錯誤
+    prediction = prediction.flatten()
+    ground_truth = ground_truth.flatten()
     logistic_loss = np.mean(-ground_truth * np.log(prediction) - (1 - ground_truth) * np.log(1 - prediction))
     return logistic_loss
 
@@ -103,7 +107,7 @@ def hw1(learning_rate=0.01, T=1000, batch_size=1):
 
     y_test_pred = model.predict(test_x)
     test_mse = compute_mse(y_test_pred, test_y)
-    
+    logger.info(f"learning_rate: {learning_rate}, T: {T}, batch_size: {batch_size}")
     logger.info(f"Final Weights: {model.weights}")
     logger.info(f"Final Intercept: {model.intercept:.4f}")
     logger.info(f"Testing MSE: {test_mse:.4f}")
@@ -150,9 +154,8 @@ def hw2(learning_rate=0.75, T=1000, batch_size=32):
     model.fit(X_train_norm, train_y, learning_rate=learning_rate, T=T, batch_size=batch_size)
     X_test_norm = (test_x_orig - X_train_mean) / X_train_std
     y_test_pred = model.predict(X_test_norm)
-    y_test_pred  = np.clip(y_test_pred , epsilon, 1 - epsilon)
     test_loss = compute_logistic_loss(y_test_pred, test_y)
-
+    logger.info(f"learning_rate: {learning_rate}, T: {T}, batch_size: {batch_size}")
     logger.info(f"Final Weights: {model.weights}")
     logger.info(f"Final Intercept: {model.intercept:.4f}")
     
@@ -194,6 +197,6 @@ def hw2(learning_rate=0.75, T=1000, batch_size=32):
 
 
 if __name__ == '__main__':
-    #hw1(learning_rate=0.01, T=1000, batch_size=32)
+    hw1(learning_rate=0.01, T=1000, batch_size=1)
     hw2(learning_rate=0.75, T=1000, batch_size=1)
     
